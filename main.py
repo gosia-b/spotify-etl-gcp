@@ -7,7 +7,7 @@ import pandas as pd
 from dateutil import parser
 import sqlalchemy
 
-from config import DATABASE_LOCATION, USER_ID, TOKEN
+from config import DATABASE_LOCATION, TOKEN
 from validation import check_if_valid_data
 
 
@@ -30,32 +30,29 @@ if __name__ == "__main__":
     data = r.json()
 
     # Convert response: JSON to pandas DataFrame
+    played_at = []
     song_name = []
+    artist = []
     album_name = []
     album_year = []
-    artist = []
-    played_at = []
-    timestamp = []
 
     for song in data["items"]:
+        played_at.append(parser.parse(song["played_at"]))
         song_name.append(song["track"]["name"])
+        artist.append(song["track"]["album"]["artists"][0]["name"])
         album_name.append(song["track"]["album"]["name"])
         album_year.append(song["track"]["album"]["release_date"][:4])
-        artist.append(song["track"]["album"]["artists"][0]["name"])
-        played_at.append(parser.parse(song["played_at"]))
 
     song_dict = {
+        "played_at": played_at,
         "song_name": song_name,
-        "album_name": album_name,
-        "album_year": album_year,
         "artist": artist,
-        "played_at": played_at
+        "album_name": album_name,
+        "album_year": album_year
     }
 
     song_df = pd.DataFrame(song_dict)
-    print(song_df)
-
-    logging.info("Data extracted")
+    logging.info("Data extracted from Spotify API")
 
     # Validate
     if check_if_valid_data(song_df):
@@ -68,11 +65,11 @@ if __name__ == "__main__":
 
     sql_query = """
     CREATE TABLE IF NOT EXISTS my_played_songs(
+        played_at TIMESTAMP,
         song_name VARCHAR(200),
+        artist VARCHAR(200),
         album_name VARCHAR(200),
         album_year INT(4),
-        artist VARCHAR(200),
-        played_at TIMESTAMP,
         CONSTRAINT primary_key_constraint PRIMARY KEY (played_at)
     )
     """
