@@ -59,10 +59,6 @@ if __name__ == "__main__":
         logging.info("Data valid, proceed to load stage")
 
     # Load data to SQLite database
-    engine = sqlalchemy.create_engine(DATABASE_LOCATION)
-    con = sqlite3.connect("my_played_songs.sqlite")
-    cursor = con.cursor()
-
     sql_query = """
     CREATE TABLE IF NOT EXISTS my_played_songs(
         played_at TIMESTAMP,
@@ -74,13 +70,14 @@ if __name__ == "__main__":
     )
     """
 
-    cursor.execute(sql_query)
-    logging.info("Opened database successfully")
+    engine = sqlalchemy.create_engine(DATABASE_LOCATION)
+    with sqlite3.connect("my_played_songs.sqlite") as con:
+        cursor = con.cursor()
+        cursor.execute(sql_query)
+        logging.info("Opened database successfully")
 
-    try:
-        song_df.to_sql("my_played_songs", engine, index=False, if_exists="append")
-    except:
-        logging.warning("Data already exists in the database")
-
-    con.close()
+        try:
+            song_df.to_sql("my_played_songs", engine, index=False, if_exists="append")
+        except:
+            logging.warning("Data already exists in the database")
     logging.info("Closed database successfully")
