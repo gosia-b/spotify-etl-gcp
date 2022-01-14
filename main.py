@@ -1,15 +1,18 @@
 import logging
 import requests
 from datetime import datetime, timedelta
+import sqlite3
 
 import pandas as pd
 from dateutil import parser
+import sqlalchemy
 
 from config import DATABASE_LOCATION, USER_ID, TOKEN
 from validation import check_if_valid_data
 
 
 if __name__ == "__main__":
+    logging.basicConfig(level=logging.INFO)
 
     # API request
     headers = {
@@ -57,3 +60,30 @@ if __name__ == "__main__":
     # Validate
     if check_if_valid_data(song_df):
         logging.info("Data valid, proceed to load stage")
+
+    # Load data to SQLite database
+    engine = sqlalchemy.create_engine(DATABASE_LOCATION)
+    con = sqlite3.connect("my_played_songs.sqlite")
+    cursor = con.cursor()
+
+    sql_query = """
+    CREATE TABLE IF NOT EXISTS my_played_songs(
+        song_name VARCHAR(200),
+        album_name VARCHAR(200),
+        album_year INT(4),
+        artist VARCHAR(200),
+        played_at TIMESTAMP,
+        CONSTRAINT primary_key_constraint PRIMARY KEY (played_at)
+    )
+    """
+
+    cursor.execute(sql_query)
+    logging.info("Opened database successfully")
+
+    try:
+        song_df.to_sql("my_played_songs", engine, index=False, if_exists="append")
+    except:
+        logging.warning("Data already exists in the database")
+
+    con.close()
+    logging.info("Closed database successfully")
