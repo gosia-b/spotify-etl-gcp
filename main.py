@@ -7,12 +7,14 @@ import pandas as pd
 from dateutil import parser
 import sqlalchemy
 
-from config import DATABASE_LOCATION, TOKEN
+from config import DATABASE_LOCATION
 from validation import check_if_valid_data
+from refresh_token import refresh_token
 
 
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO)
+    TOKEN = refresh_token()
 
     # API request
     headers = {
