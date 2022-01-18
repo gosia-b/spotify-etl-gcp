@@ -77,7 +77,6 @@ if __name__ == "__main__":
         cursor = con.cursor()
         cursor.execute(sql_query)
         logging.info("Opened database successfully")
-
         try:
             song_df.to_sql("my_played_songs", engine, index=False, if_exists="append")
         except:
