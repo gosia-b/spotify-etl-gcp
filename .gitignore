@@ -1,2 +1,3 @@
 config.py
 my_played_songs.sqlite
+gcp/db_credentials.py
