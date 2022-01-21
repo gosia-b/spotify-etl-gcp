@@ -1,5 +1,5 @@
 import pandas as pd
-import mysql.connector
+import sqlalchemy
 
 from db_credentials import USER, PASSWORD, HOST, DATABASE
 
@@ -19,11 +19,14 @@ query_show_tables = """
 SHOW TABLES
 """
 
-with mysql.connector.connect(user=USER, password=PASSWORD, host=HOST, database=DATABASE) as con:
-    # Create table
-    cursor = con.cursor()
-    cursor.execute(query_create_table)
+# Connect to the database
+engine = sqlalchemy.create_engine(f"mysql+pymysql://{USER}:{PASSWORD}@{HOST}/{DATABASE}")
+con = engine.raw_connection()
+cursor = con.cursor()
 
-    # Show all tables in the database
-    df = pd.read_sql(query_show_tables, con)
-    print(df)
+# Create table
+cursor.execute(query_create_table)
+
+# Show all tables in the database
+df = pd.read_sql(query_show_tables, engine)
+print(df)
