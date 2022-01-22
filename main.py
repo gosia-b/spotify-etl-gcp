@@ -11,15 +11,15 @@ from refresh_token import refresh_token
 from config import USER, PASSWORD, HOST, DATABASE
 
 
-def main_function(event, context):
+def main_function(event, context) -> None:
     logging.basicConfig(level=logging.INFO)
-    TOKEN = refresh_token()
+    token = refresh_token()
 
     # API request
     headers = {
         "Accept": "application/json",
         "Content-Type": "application/json",
-        "Authorization": f"Bearer {TOKEN}"
+        "Authorization": f"Bearer {token}"
     }
 
     now = datetime.now()
@@ -59,7 +59,13 @@ def main_function(event, context):
     if check_if_valid_data(song_df):
         logging.info("Data valid, proceed to load stage")
 
-        # Load data to SQLite database
+        # Connect to the database
+        engine = sqlalchemy.create_engine(f"mysql+pymysql://{USER}:{PASSWORD}@{HOST}/{DATABASE}")
+        con = engine.raw_connection()
+        cursor = con.cursor()
+        logging.info("Opened database successfully")
+
+        # Create table
         query_create_table = """
         CREATE TABLE IF NOT EXISTS my_played_songs(
             played_at TIMESTAMP,
@@ -70,19 +76,13 @@ def main_function(event, context):
             CONSTRAINT primary_key_constraint PRIMARY KEY (played_at)
         )
         """
-
-        # Connect to the database
-        engine = sqlalchemy.create_engine(f"mysql+pymysql://{USER}:{PASSWORD}@{HOST}/{DATABASE}")
-        con = engine.raw_connection()
-        cursor = con.cursor()
-        logging.info("Opened database successfully")
-
-        # Create table
         cursor.execute(query_create_table)
         logging.info("Table created or already exists")
 
         # Append dataframe to the database table
+        print(song_df)
         try:
             song_df.to_sql("my_played_songs", con=engine, index=False, if_exists="append")
-        except sqlalchemy.exc.IntegrityError:
+        except sqlalchemy.exc.IntegrityError as e:
+            print(e)
             logging.warning("Data already exists in the database")

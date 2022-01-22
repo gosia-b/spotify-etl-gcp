@@ -3,7 +3,7 @@ import requests
 from config import REFRESH_TOKEN, AUTHORIZATION_ENCODED
 
 
-def refresh_token():
+def refresh_token() -> str:
     """ Generate new token """
     response = requests.post(
         "https://accounts.spotify.com/api/token",
