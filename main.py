@@ -80,9 +80,8 @@ def main_function(event, context) -> None:
         logging.info("Table created or already exists")
 
         # Append dataframe to the database table
-        print(song_df)
-        try:
-            song_df.to_sql("my_played_songs", con=engine, index=False, if_exists="append")
-        except sqlalchemy.exc.IntegrityError as e:
-            print(e)
-            logging.warning("Data already exists in the database")
+        for i, _ in song_df.iterrows():
+            try:
+                song_df.iloc[i:i+1].to_sql("my_played_songs", con=engine, index=False, if_exists="append")
+            except sqlalchemy.exc.IntegrityError:
+                pass  # If played_at already exists in the table, don't insert the row
