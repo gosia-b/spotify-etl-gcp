@@ -1,18 +1,17 @@
 import logging
 import requests
 from datetime import datetime, timedelta
-import sqlite3
 
 import pandas as pd
 from dateutil import parser
 import sqlalchemy
 
-from config import DATABASE_LOCATION
 from validation import check_if_valid_data
 from refresh_token import refresh_token
+from config import USER, PASSWORD, HOST, DATABASE
 
 
-if __name__ == "__main__":
+def main_function(event, context):
     logging.basicConfig(level=logging.INFO)
     TOKEN = refresh_token()
 
@@ -24,7 +23,7 @@ if __name__ == "__main__":
     }
 
     now = datetime.now()
-    yesterday = now - timedelta(days=1)
+    yesterday = now - timedelta(days=2)
     yesterday_unix_timestamp = int(yesterday.timestamp()) * 1000
 
     url = f"https://api.spotify.com/v1/me/player/recently-played?after={yesterday_unix_timestamp}"
@@ -60,25 +59,30 @@ if __name__ == "__main__":
     if check_if_valid_data(song_df):
         logging.info("Data valid, proceed to load stage")
 
-    # Load data to SQLite database
-    sql_query = """
-    CREATE TABLE IF NOT EXISTS my_played_songs(
-        played_at TIMESTAMP,
-        song_name VARCHAR(200),
-        artist VARCHAR(200),
-        album_name VARCHAR(200),
-        album_year INT(4),
-        CONSTRAINT primary_key_constraint PRIMARY KEY (played_at)
-    )
-    """
+        # Load data to SQLite database
+        query_create_table = """
+        CREATE TABLE IF NOT EXISTS my_played_songs(
+            played_at TIMESTAMP,
+            song_name VARCHAR(200),
+            artist VARCHAR(200),
+            album_name VARCHAR(200),
+            album_year INT(4),
+            CONSTRAINT primary_key_constraint PRIMARY KEY (played_at)
+        )
+        """
 
-    engine = sqlalchemy.create_engine(DATABASE_LOCATION)
-    with sqlite3.connect("my_played_songs.sqlite") as con:
+        # Connect to the database
+        engine = sqlalchemy.create_engine(f"mysql+pymysql://{USER}:{PASSWORD}@{HOST}/{DATABASE}")
+        con = engine.raw_connection()
         cursor = con.cursor()
-        cursor.execute(sql_query)
         logging.info("Opened database successfully")
+
+        # Create table
+        cursor.execute(query_create_table)
+        logging.info("Table created or already exists")
+
+        # Append dataframe to the database table
         try:
-            song_df.to_sql("my_played_songs", engine, index=False, if_exists="append")
-        except:
+            song_df.to_sql("my_played_songs", con=engine, index=False, if_exists="append")
+        except sqlalchemy.exc.IntegrityError:
             logging.warning("Data already exists in the database")
-    logging.info("Closed database successfully")
