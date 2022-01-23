@@ -7,7 +7,7 @@ In my case, this function is invoked once a day by a Cloud Scheduler job.
 It connects to Spotify API and gets the data about songs I played in last 24 hours. Then saves this data to a MySQL database set up in Cloud SQL.  
 
 <p align="center">
-<img width="80%" src="https://raw.githubusercontent.com/gosia-b/spotify-etl/master/gcp_architecture.PNG">
+<img width="100%" src="https://raw.githubusercontent.com/gosia-b/spotify-etl/master/gcp_architecture.PNG">
 </p>
 
 # Connection to the database
