@@ -23,10 +23,10 @@ def main_function(event, context) -> None:
     }
 
     now = datetime.now()
-    yesterday = now - timedelta(days=2)
+    yesterday = now - timedelta(days=1)
     yesterday_unix_timestamp = int(yesterday.timestamp()) * 1000
 
-    url = f"https://api.spotify.com/v1/me/player/recently-played?after={yesterday_unix_timestamp}"
+    url = f"https://api.spotify.com/v1/me/player/recently-played?limit=50&after={yesterday_unix_timestamp}"
     r = requests.get(url, headers=headers)
     data = r.json()
 
